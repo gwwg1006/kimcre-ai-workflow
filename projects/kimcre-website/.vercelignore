@@ -1,0 +1,8 @@
+# Secrets and local-only data never leave this machine; Vercel has its own env vars and Postgres.
+.env*
+!.env.example
+data/db.json
+# Root-only: public/uploads/ holds portfolio photos that must ship.
+/uploads/
+.next/
+node_modules/

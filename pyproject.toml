@@ -1,0 +1,6 @@
+[project]
+name = "makerflow-ai"
+version = "0.1.0"
+description = "3D 프린팅 제작 의뢰 문의-견적-제작-배송 AI 워크플로우 (해커톤 데모)"
+requires-python = ">=3.10"
+dependencies = []  # 표준 라이브러리만 사용

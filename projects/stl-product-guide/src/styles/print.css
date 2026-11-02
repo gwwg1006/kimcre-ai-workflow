@@ -1,0 +1,99 @@
+/* Dedicated A4 Print Stylesheet */
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
+
+  *, *::before, *::after {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  html, body {
+    width: 210mm !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    overflow: visible !important;
+  }
+
+  #root {
+    display: block !important;
+    width: 210mm !important;
+    height: auto !important;
+    overflow: visible !important;
+    position: static !important;
+  }
+
+  /* Completely hide all UI elements except #print-root */
+  header,
+  main,
+  aside,
+  section,
+  nav,
+  #app-sidebar,
+  #app-viewer,
+  #app-preview,
+  #app-preview-toolbar,
+  #app-print-button-bar,
+  .modal-overlay,
+  .no-print {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    width: 0 !important;
+    overflow: hidden !important;
+  }
+
+  /* Make print root the only visible container */
+  #print-root {
+    display: block !important;
+    visibility: visible !important;
+    position: static !important;
+    width: 210mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+  }
+
+  .print-page {
+    width: 210mm !important;
+    height: 297mm !important;
+    max-height: 297mm !important;
+    min-height: 297mm !important;
+    padding: 10mm !important;
+    box-sizing: border-box !important;
+    page-break-after: always !important;
+    break-after: page !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+    background: #ffffff !important;
+  }
+
+  .print-page:last-child {
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+  }
+
+  .print-card-box {
+    border: 1.5px solid #0f172a !important;
+    background: #ffffff !important;
+  }
+}
+
+/* Offscreen print root in normal browser screen view */
+@media screen {
+  #print-root {
+    position: fixed !important;
+    left: -99999px !important;
+    top: -99999px !important;
+    width: 210mm !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    z-index: -9999 !important;
+  }
+}

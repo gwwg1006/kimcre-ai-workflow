@@ -1,0 +1,25 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+
+const items = fs.readFileSync('static/js/modules/detail-items.js', 'utf8');
+const detail = fs.readFileSync('static/js/modules/project-detail.js', 'utf8');
+const app = fs.readFileSync('static/js/app.js', 'utf8');
+const template = fs.readFileSync('templates/index.html', 'utf8');
+assert.match(items, /pricing\.calculateAmounts/);
+assert.match(items, /shippingFee: shipping/);
+assert.match(items, /detail-item-remove/);
+assert.doesNotMatch(items, /onclick=/);
+assert.match(items, /options\.pricing \|\| window\.Pricing/);
+assert.match(items, /manager = instance/);
+assert.match(items, /payload\.totals\.valid/);
+assert.match(items, /payload\.amount\.valid/);
+assert.match(detail, /data-detail-action/);
+assert.match(detail, /detailFields/);
+assert.match(detail, /inlineBusy/);
+assert.match(detail, /updateTrackingLinkFromFields/);
+assert.match(detail, /p\.tracking_no \|\| ''/);
+assert.doesNotMatch(app, /legacy(Render|Add|Remove|Calculate|Save)Detail/);
+assert.doesNotMatch(template, /onclick="startInlineEdit\(/);
+assert.doesNotMatch(template, /onclick="(addDetailItemRow|saveDetailItems)\(/);
+assert.doesNotMatch(template, /on(?:input|change)="(?:calculateDetailItemTotals|handleQuick(?:ShippingFee|TaxTypeUpdate))/);
+console.log('detail_contract.test.js: ok');

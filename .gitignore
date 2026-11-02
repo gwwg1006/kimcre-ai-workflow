@@ -1,0 +1,14 @@
+.env
+.env.*
+!.env.example
+__pycache__/
+*.pyc
+.venv/
+.DS_Store
+# 실제 고객 자료는 절대 커밋하지 않는다
+data/private/
+*.stl
+*.step
+*.stp
+*.3mf
+*.obj

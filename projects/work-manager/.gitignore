@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+
+# Local secrets and machine settings
+.env
+.env.*
+.DS_Store
+.idea/
+.vscode/
+
+# Local runtime data and customer-provided files
+data/*
+!data/templates/
+!data/templates/**
+
+# Dependency/build output
+node_modules/
+dist/
+build/
+*.egg-info/
+
+# Local test and coverage output
+.pytest_cache/
+.coverage
+htmlcov/

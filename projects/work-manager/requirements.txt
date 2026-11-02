@@ -1,0 +1,5 @@
+flask>=3.0.0
+flask-cors>=4.0.0
+openpyxl>=3.1.2
+xlwings>=0.30.0
+appscript>=1.2.0

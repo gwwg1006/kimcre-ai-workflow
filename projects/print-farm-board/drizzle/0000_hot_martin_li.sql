@@ -1,0 +1,20 @@
+CREATE TABLE `jobs` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`printer` text NOT NULL,
+	`model_name` text NOT NULL,
+	`file_name` text DEFAULT '' NOT NULL,
+	`quantity` integer DEFAULT 1 NOT NULL,
+	`completed_quantity` integer DEFAULT 0 NOT NULL,
+	`material` text DEFAULT 'PLA' NOT NULL,
+	`color` text DEFAULT 'White' NOT NULL,
+	`nozzle` text DEFAULT '0.4 mm' NOT NULL,
+	`estimated_time` text DEFAULT '' NOT NULL,
+	`print_settings` text DEFAULT '0.20 mm Standard' NOT NULL,
+	`customer` text DEFAULT '' NOT NULL,
+	`note` text DEFAULT '' NOT NULL,
+	`status` text DEFAULT 'waiting' NOT NULL,
+	`priority` text DEFAULT 'normal' NOT NULL,
+	`sort_order` integer DEFAULT 0 NOT NULL,
+	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	`updated_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL
+);

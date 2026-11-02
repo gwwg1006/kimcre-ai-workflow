@@ -1,0 +1,813 @@
+/* ============================================
+   KimcreGPT UI Design System
+   Premium Glassmorphic Dark Theme
+   ============================================ */
+
+.wrapper {
+  display: flex;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  background-color: #080c14;
+  color: #e2e8f0;
+  overflow: hidden;
+  position: relative;
+  font-family: 'Noto Sans KR', 'Inter', sans-serif;
+}
+
+/* ============================================
+   Sidebar
+   ============================================ */
+.sidebar {
+  width: 280px;
+  background-color: rgba(13, 20, 35, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  z-index: 100;
+  transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebarHeader {
+  padding: 1.25rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.brandAccent {
+  background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 800;
+}
+
+.newChatBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.75rem;
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  color: #ffffff;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 200ms ease;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
+}
+
+.newChatBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(79, 70, 229, 0.35);
+  opacity: 0.95;
+}
+
+.newChatBtn:active {
+  transform: translateY(0);
+}
+
+.chatList {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+/* Custom Scrollbar for Chat List */
+.chatList::-webkit-scrollbar {
+  width: 4px;
+}
+
+.chatList::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chatList::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 9999px;
+}
+
+.chatItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.65rem 0.75rem;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: all 150ms ease;
+  font-size: 0.85rem;
+  color: #94a3b8;
+  position: relative;
+  group: true;
+}
+
+.chatItem:hover {
+  background-color: rgba(255, 255, 255, 0.04);
+  color: #f1f5f9;
+}
+
+.chatItemActive {
+  background-color: rgba(79, 70, 229, 0.15) !important;
+  border-left: 3px solid #6366f1;
+  color: #ffffff !important;
+  font-weight: 500;
+}
+
+.chatTitleText {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-right: 0.5rem;
+}
+
+.deleteChatBtn {
+  opacity: 0;
+  background: none;
+  border: none;
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+  color: #94a3b8;
+  transition: all 150ms ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chatItem:hover .deleteChatBtn {
+  opacity: 1;
+}
+
+.deleteChatBtn:hover {
+  background-color: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+}
+
+.sidebarFooter {
+  padding: 0.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.footerBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 0.375rem;
+  color: #94a3b8;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 150ms ease;
+}
+
+.footerBtn:hover {
+  background-color: rgba(255, 255, 255, 0.04);
+  color: #ffffff;
+}
+
+/* ============================================
+   Main Chat Container
+   ============================================ */
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  position: relative;
+  background-color: #0b111e;
+}
+
+.mainHeader {
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  background-color: rgba(11, 17, 30, 0.8);
+  backdrop-filter: blur(10px);
+  z-index: 50;
+}
+
+.menuToggle {
+  display: none;
+  color: #ffffff;
+  padding: 0.5rem;
+  border-radius: 0.375rem;
+  margin-right: 0.5rem;
+}
+
+.menuToggle:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.activeTitle {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #f1f5f9;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 300px;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.headerIconBtn {
+  color: #94a3b8;
+  padding: 0.5rem;
+  border-radius: 0.375rem;
+  transition: all 150ms ease;
+}
+
+.headerIconBtn:hover {
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* ============================================
+   Chat Area (Message Feed)
+   ============================================ */
+.chatArea {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Custom Scrollbar for Chat Area */
+.chatArea::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chatArea::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chatArea::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 9999px;
+}
+
+.chatArea::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* ============================================
+   Welcome View (Landing Page)
+   ============================================ */
+.welcomeContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  max-width: 720px;
+  margin: auto;
+  padding: 2rem 1rem;
+  text-align: center;
+}
+
+.welcomeLogo {
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
+  animation: floatUp 3s ease-in-out infinite;
+}
+
+.welcomeTitle {
+  font-size: 2.25rem;
+  font-weight: 800;
+  margin-bottom: 0.75rem;
+  background: linear-gradient(135deg, #ffffff 0%, #94a3b8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.welcomeSubtitle {
+  font-size: 0.95rem;
+  color: #94a3b8;
+  margin-bottom: 2.5rem;
+  line-height: 1.6;
+}
+
+.suggestionGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  width: 100%;
+}
+
+.suggestionCard {
+  background-color: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  text-align: left;
+  cursor: pointer;
+  transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.suggestionCard:hover {
+  background-color: rgba(255, 255, 255, 0.04);
+  border-color: rgba(99, 102, 241, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.suggestionIcon {
+  font-size: 1.25rem;
+}
+
+.suggestionTitle {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #f1f5f9;
+}
+
+.suggestionDesc {
+  font-size: 0.75rem;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+/* ============================================
+   Message Bubbles
+   ============================================ */
+.messageRow {
+  display: flex;
+  width: 100%;
+  margin-bottom: 0.5rem;
+}
+
+.messageRowUser {
+  justify-content: flex-end;
+}
+
+.messageRowAI {
+  justify-content: flex-start;
+}
+
+.messageBubble {
+  max-width: 80%;
+  padding: 1rem 1.25rem;
+  border-radius: 1rem;
+  line-height: 1.6;
+  font-size: 0.95rem;
+  position: relative;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  animation: fadeIn 300ms ease;
+}
+
+.userBubble {
+  background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
+  color: #ffffff;
+  border-bottom-right-radius: 0.25rem;
+}
+
+.aiBubble {
+  background-color: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  color: #e2e8f0;
+  border-bottom-left-radius: 0.25rem;
+  backdrop-filter: blur(5px);
+}
+
+/* ============================================
+   Markdown Rendering Styles
+   ============================================ */
+.markdown {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.markdown p {
+  margin: 0;
+  word-break: break-word;
+}
+
+.markdown strong {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.markdown ul, .markdown ol {
+  padding-left: 1.25rem;
+  margin: 0.25rem 0;
+}
+
+.markdown ul {
+  list-style-type: disc;
+}
+
+.markdown ol {
+  list-style-type: decimal;
+}
+
+.markdown li {
+  margin-bottom: 0.25rem;
+}
+
+.markdown code {
+  background-color: rgba(0, 0, 0, 0.3);
+  padding: 0.15rem 0.3rem;
+  border-radius: 0.25rem;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.85em;
+  color: #f43f5e;
+}
+
+/* Formatting code block container */
+.codeBlockContainer {
+  margin: 0.75rem 0;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  background-color: #05080f;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.codeBlockHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  background-color: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  font-size: 0.75rem;
+  color: #64748b;
+  font-family: monospace;
+}
+
+.copyCodeBtn {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  transition: color 150ms ease;
+  font-size: 0.7rem;
+}
+
+.copyCodeBtn:hover {
+  color: #ffffff;
+}
+
+.codeContent {
+  padding: 1rem;
+  overflow-x: auto;
+  font-family: 'Fira Code', 'Courier New', Courier, monospace;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: #cbd5e1;
+  margin: 0;
+}
+
+/* ============================================
+   Blinking Typing Cursor
+   ============================================ */
+.cursor {
+  display: inline-block;
+  width: 8px;
+  height: 15px;
+  background-color: #6366f1;
+  margin-left: 4px;
+  vertical-align: middle;
+  animation: blink 800ms step-end infinite;
+}
+
+@keyframes blink {
+  from, to { background-color: transparent; }
+  50% { background-color: #6366f1; }
+}
+
+/* ============================================
+   Input Form Box
+   ============================================ */
+.inputContainer {
+  padding: 1rem 1.5rem 1.5rem;
+  background-color: rgba(11, 17, 30, 0.7);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.inputWrapper {
+  max-width: 720px;
+  margin: auto;
+  display: flex;
+  background-color: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 0.75rem;
+  padding: 0.5rem;
+  align-items: flex-end;
+  gap: 0.5rem;
+  transition: all 200ms ease;
+}
+
+.inputWrapper:focus-within {
+  border-color: rgba(99, 102, 241, 0.4);
+  box-shadow: 0 0 15px rgba(99, 102, 241, 0.1);
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+.textarea {
+  flex: 1;
+  border: none;
+  background: none;
+  resize: none;
+  outline: none;
+  color: #ffffff;
+  padding: 0.5rem;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  max-height: 180px;
+  min-height: 24px;
+  font-family: inherit;
+}
+
+.textarea::-webkit-scrollbar {
+  width: 4px;
+}
+
+.textarea::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 9999px;
+}
+
+.sendBtn {
+  background-color: #4f46e5;
+  color: #ffffff;
+  width: 36px;
+  height: 36px;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 150ms ease;
+  flex-shrink: 0;
+}
+
+.sendBtn:hover {
+  background-color: #6366f1;
+  transform: scale(1.03);
+}
+
+.sendBtn:disabled {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: #64748b;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.stopBtn {
+  background-color: #ef4444;
+  color: #ffffff;
+  width: 36px;
+  height: 36px;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 150ms ease;
+  flex-shrink: 0;
+}
+
+.stopBtn:hover {
+  background-color: #f87171;
+}
+
+.disclaimer {
+  text-align: center;
+  font-size: 0.72rem;
+  color: #475569;
+  margin-top: 0.5rem;
+}
+
+/* ============================================
+   Settings Panel / Overlay
+   ============================================ */
+.overlay {
+  position: absolute;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  backdrop-filter: blur(4px);
+  animation: fadeIn 200ms ease;
+}
+
+.modal {
+  background-color: #0e1626;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 1rem;
+  width: 100%;
+  max-width: 480px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  animation: slideDown 250ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modalTitle {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.closeBtn {
+  color: #94a3b8;
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+  transition: color 150ms ease;
+}
+
+.closeBtn:hover {
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.settingGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.settingLabel {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #94a3b8;
+  display: flex;
+  justify-content: space-between;
+}
+
+.settingValue {
+  color: #6366f1;
+}
+
+.settingInput {
+  background-color: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.375rem;
+  padding: 0.6rem;
+  color: #ffffff;
+  font-size: 0.88rem;
+  outline: none;
+  transition: border-color 150ms ease;
+}
+
+.settingInput:focus {
+  border-color: #6366f1;
+}
+
+.settingSelect {
+  background-color: #080c14;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.375rem;
+  padding: 0.6rem;
+  color: #ffffff;
+  font-size: 0.88rem;
+  outline: none;
+}
+
+.settingTextarea {
+  background-color: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.375rem;
+  padding: 0.6rem;
+  color: #ffffff;
+  font-size: 0.85rem;
+  outline: none;
+  resize: vertical;
+  min-height: 80px;
+}
+
+.settingTextarea:focus {
+  border-color: #6366f1;
+}
+
+/* Slider styling */
+.slider {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.08);
+  outline: none;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #6366f1;
+  cursor: pointer;
+  transition: transform 150ms ease;
+}
+
+.slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+.saveSettingsBtn {
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  color: #ffffff;
+  padding: 0.75rem;
+  border-radius: 0.375rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-align: center;
+  transition: opacity 150ms ease;
+}
+
+.saveSettingsBtn:hover {
+  opacity: 0.95;
+}
+
+/* ============================================
+   Animations
+   ============================================ */
+@keyframes floatUp {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ============================================
+   Mobile & Responsive Layouts
+   ============================================ */
+@media (max-width: 768px) {
+  .menuToggle {
+    display: block;
+  }
+
+  .sidebar {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    transform: translateX(-100%);
+  }
+
+  .sidebarOpen {
+    transform: translateX(0);
+  }
+
+  .suggestionGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .messageBubble {
+    max-width: 90%;
+  }
+}

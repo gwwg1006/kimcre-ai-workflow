@@ -1,0 +1,1379 @@
+<!DOCTYPE html>
+<html lang="ko" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>김명규크리에이티브 | 3D 프린팅 작업관리 시스템</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <!-- Font Awesome / Iconify CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Three.js & STLLoader for 3D STL Preview -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/STLLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ static_asset_url('css/style.css') }}">
+</head>
+<body>
+    <div class="app-layout">
+        <!-- 사이드바 -->
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-logo">
+                    <i class="fa-solid fa-cube"></i>
+                </div>
+                <div class="brand-text">
+                    <span class="brand-title">김명규크리에이티브</span>
+                    <span class="brand-subtitle">3D PRINTING OPS</span>
+                </div>
+            </div>
+
+            <nav class="nav-menu">
+                <button class="nav-item active" data-view="dashboard">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span>작업 현황판</span>
+                </button>
+                <button class="nav-item" data-view="all-projects">
+                    <i class="fa-solid fa-list-check"></i>
+                    <span>전체 작업</span>
+                    <span class="badge count-badge" id="nav-total-count">0</span>
+                </button>
+                <button class="nav-item" data-view="print-waiting">
+                    <i class="fa-solid fa-layer-group"></i>
+                    <span>슬라이싱 / 대기</span>
+                    <span class="badge warning-badge" id="nav-waiting-count">0</span>
+                </button>
+                <button class="nav-item" data-view="printing">
+                    <i class="fa-solid fa-print"></i>
+                    <span>출력 중</span>
+                    <span class="badge info-badge" id="nav-printing-count">0</span>
+                </button>
+                <button class="nav-item" data-view="delivery">
+                    <i class="fa-solid fa-truck-fast"></i>
+                    <span>배송 관리</span>
+                    <span class="badge warning-badge" id="nav-delivery-count">0</span>
+                </button>
+                <button class="nav-item" data-view="payment">
+                    <i class="fa-solid fa-receipt"></i>
+                    <span>입금 / 정산</span>
+                </button>
+                <button class="nav-item" data-view="completed">
+                    <i class="fa-solid fa-box-archive"></i>
+                    <span>완료 보관함</span>
+                </button>
+                <button class="nav-item" data-view="partners">
+                    <i class="fa-solid fa-address-book"></i>
+                    <span>거래처 관리</span>
+                </button>
+                    <button class="nav-item" data-view="ai-commander" id="nav-ai-commander">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    <span>AI 총괄 관제</span>
+                    <span class="badge ai-badge">3.7 Flash</span>
+                </button>
+            </nav>
+
+            <div class="sidebar-footer">
+                <button class="btn btn-primary btn-block" id="btn-open-new-project">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>신규 작업 등록</span>
+                </button>
+                <div class="footer-actions">
+                    <button class="btn-icon" id="btn-open-ai-settings" aria-label="AI 전송 설정" title="AI 전송 설정">
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </button>
+                    <button class="btn-icon" id="btn-sync-all" aria-label="운영대장 및 폴더 동기화" title="운영대장 및 폴더 동기화">
+                        <i class="fa-solid fa-arrows-rotate"></i>
+                    </button>
+                    <button class="btn-icon" id="btn-theme-toggle" aria-label="다크/라이트 모드 전환" title="다크/라이트 모드 전환">
+                        <i class="fa-solid fa-moon"></i>
+                    </button>
+                    <button class="btn-icon btn-icon-danger" id="btn-shutdown-server" aria-label="작업관리 서버 종료" title="작업관리 서버 종료">
+                        <i class="fa-solid fa-power-off"></i>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- 메인 콘텐츠 영역 -->
+        <main class="main-content">
+            <!-- 상단 헤더 -->
+            <header class="top-header">
+                <div class="header-left">
+                    <h1 class="page-title" id="current-view-title">실시간 작업 현황판</h1>
+                    <p class="page-subtitle" id="current-view-subtitle">김명규크리에이티브의 수주, 출력, 견적, 배송 현황을 한눈에 관리합니다.</p>
+                </div>
+                <div class="header-right">
+                    <div class="search-box">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <label class="sr-only" for="global-search">프로젝트 검색</label>
+                        <input type="text" id="global-search" placeholder="프로젝트 번호, 고객명, 작업명 검색...">
+                        <button class="clear-search" id="btn-clear-search" aria-label="검색어 지우기" style="display:none;">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                    <button class="btn btn-outline" id="btn-view-mode-toggle" aria-label="카드와 테이블 보기 전환" title="카드/테이블 뷰 전환">
+                        <i class="fa-solid fa-table-cells-large"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- 상태 요약 카드 그리드 -->
+            <section class="summary-cards" id="summary-section">
+                <div class="stat-card" data-filter="all">
+                    <div class="stat-icon gray"><i class="fa-solid fa-folder-open"></i></div>
+                    <div class="stat-info">
+                        <span class="stat-label">전체 작업</span>
+                        <span class="stat-value" id="stat-total">0</span>
+                    </div>
+                </div>
+                <div class="stat-card active" data-filter="in_progress">
+                    <div class="stat-icon blue"><i class="fa-solid fa-person-digging"></i></div>
+                    <div class="stat-info">
+                        <span class="stat-label">진행 중</span>
+                        <span class="stat-value" id="stat-in-progress">0</span>
+                    </div>
+                </div>
+                <div class="stat-card" data-filter="waiting">
+                    <div class="stat-icon purple"><i class="fa-solid fa-file-code"></i></div>
+                    <div class="stat-info">
+                        <span class="stat-label">슬라이싱/대기</span>
+                        <span class="stat-value" id="stat-waiting">0</span>
+                    </div>
+                </div>
+                <div class="stat-card" data-filter="printing">
+                    <div class="stat-icon cyan"><i class="fa-solid fa-cube"></i></div>
+                    <div class="stat-info">
+                        <span class="stat-label">출력 중</span>
+                        <span class="stat-value" id="stat-printing">0</span>
+                    </div>
+                </div>
+                <div class="stat-card" data-filter="delivery_needed">
+                    <div class="stat-icon orange"><i class="fa-solid fa-truck-ramp-box"></i></div>
+                    <div class="stat-info">
+                        <span class="stat-label">배송 예약 필요</span>
+                        <span class="stat-value" id="stat-deliv-needed">0</span>
+                    </div>
+                </div>
+                <div class="stat-card" data-filter="payment_pending">
+                    <div class="stat-icon amber"><i class="fa-solid fa-clock-rotate-left"></i></div>
+                    <div class="stat-info">
+                        <span class="stat-label">입금 대기</span>
+                        <span class="stat-value" id="stat-pay-pending">0</span>
+                    </div>
+                </div>
+                <div class="stat-card" data-filter="completed">
+                    <div class="stat-icon green"><i class="fa-solid fa-circle-check"></i></div>
+                    <div class="stat-info">
+                        <span class="stat-label">완료 작업</span>
+                        <span class="stat-value" id="stat-completed">0</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 필터 툴바 -->
+            <section class="filter-toolbar" id="project-filter-toolbar">
+                <div class="filter-group">
+                    <label for="filter-prod-status">제작 상태:</label>
+                    <select id="filter-prod-status" class="select-input">
+                        <option value="">전체 제작 상태</option>
+                        <option value="접수">접수</option>
+                        <option value="슬라이싱">슬라이싱</option>
+                        <option value="견적 대기">견적 대기</option>
+                        <option value="출력 중">출력 중</option>
+                        <option value="검수">검수</option>
+                        <option value="제작 완료">제작 완료</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="filter-pay-status">결제 상태:</label>
+                    <select id="filter-pay-status" class="select-input">
+                        <option value="">전체 결제 상태</option>
+                        <option value="미청구">미청구</option>
+                        <option value="견적 발송">견적 발송</option>
+                        <option value="입금 대기">입금 대기</option>
+                        <option value="부분 입금">부분 입금</option>
+                        <option value="입금 완료">입금 완료</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="filter-deliv-status">배송 상태:</label>
+                    <select id="filter-deliv-status" class="select-input">
+                        <option value="">전체 배송 상태</option>
+                        <option value="미정">미정</option>
+                        <option value="예약 필요">예약 필요</option>
+                        <option value="예약 완료">예약 완료</option>
+                        <option value="발송">발송</option>
+                        <option value="배송 완료">배송 완료</option>
+                    </select>
+                </div>
+                <button class="btn btn-ghost btn-sm" id="btn-reset-filters">
+                    <i class="fa-solid fa-rotate-left"></i> 필터 초기화
+                </button>
+            </section>
+
+            <!-- 거래처 관리 뷰 -->
+            <section class="partners-view" id="partners-view" style="display:none;">
+                <div class="partners-toolbar">
+                    <div>
+                        <h3><i class="fa-solid fa-address-book text-primary"></i> 거래처 목록</h3>
+                        <p>거래처를 등록해 두면 신규 프로젝트 입력 시 연락처와 배송지가 자동으로 채워집니다.</p>
+                    </div>
+                    <div class="partners-actions">
+                        <input type="search" id="partners-search" class="form-control" aria-label="거래처 검색" placeholder="거래처명·담당자·전화 검색">
+                        <button type="button" class="btn btn-primary" id="btn-add-partner"><i class="fa-solid fa-plus"></i> 거래처 등록</button>
+                    </div>
+                </div>
+                <div class="partners-table-wrapper">
+                    <table class="data-table partners-table">
+                        <thead>
+                            <tr><th>거래처명</th><th>담당자</th><th>전화번호</th><th>주소</th><th>프로젝트</th><th>작업</th></tr>
+                        </thead>
+                        <tbody id="partners-table-body"></tbody>
+                    </table>
+                </div>
+                <div class="empty-state" id="partners-empty-state" style="display:none;">
+                    <div class="empty-icon"><i class="fa-solid fa-address-book"></i></div>
+                    <h3>등록된 거래처가 없습니다</h3>
+                    <p>자주 거래하는 고객과 업체를 등록해 보세요.</p>
+                </div>
+            </section>
+
+            <!-- 프로젝트 목록 그리드 -->
+            <section class="projects-container">
+                <div class="projects-grid" id="projects-grid">
+                    <!-- JS로 동적 렌더링 -->
+                </div>
+                <div class="projects-table-wrapper" id="projects-table-wrapper" style="display:none;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>프로젝트 번호</th>
+                                <th>고객명</th>
+                                <th>작업명</th>
+                                <th>제작 상태</th>
+                                <th>결제 상태</th>
+                                <th>배송 상태</th>
+                                <th>금액</th>
+                                <th>납기</th>
+                                <th>작업</th>
+                            </tr>
+                        </thead>
+                        <tbody id="projects-table-body">
+                            <!-- JS 동적 렌더링 -->
+                        </tbody>
+                    </table>
+                </div>
+                <!-- 빈 상태 표시 -->
+                <div class="empty-state" id="empty-state" style="display:none;">
+                    <div class="empty-icon"><i class="fa-solid fa-box-open"></i></div>
+                    <h3>해당 조건의 작업이 없습니다</h3>
+                    <p>검색어나 필터 조건을 변경하거나 새로운 프로젝트를 등록하세요.</p>
+                    <button class="btn btn-primary" data-ui-action="new-project">
+                        <i class="fa-solid fa-plus"></i> 새 작업 등록하기
+                    </button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- ==================== 모달 영역 ==================== -->
+
+    <!-- 1. 신규 작업 등록 모달 (2분할 레이아웃: 좌측 AI 대화/드롭존 + 우측 상세정보 입력) -->
+    <div class="modal-overlay" id="modal-new-project" role="dialog" aria-modal="true" aria-hidden="true" inert aria-labelledby="new-project-modal-title">
+        <div class="modal-card modal-new-project-split">
+            <div class="modal-header">
+                <div class="modal-title-group">
+                    <i class="fa-solid fa-folder-plus text-primary"></i>
+                    <h2 id="new-project-modal-title">신규 3D 프린팅 작업 등록</h2>
+                </div>
+                <button type="button" class="modal-close" aria-label="신규 작업 등록 닫기" data-ui-action="close-modal" data-modal-id="modal-new-project"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="form-new-project">
+                <div class="modal-body new-project-modal-body">
+                    <div class="new-project-split-grid">
+                        <!-- 좌측 패널: AI 대화형 채팅창 (크게) + 통합 드롭존 + 첨부파일 그리드 -->
+                        <div class="new-project-left-panel">
+                            <div class="ai-assistant-card" id="ai-assistant-panel">
+                                <div class="ai-assistant-header">
+                                    <div class="ai-title-wrap">
+                                        <div class="ai-sparkle-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+                                        <div>
+                                            <h4 class="ai-title">AI 대화형 스마트 자동 입력</h4>
+                                            <p class="ai-desc">카톡 캡처 사진, 주문 텍스트, 파일을 입력하면 AI가 정보를 자동으로 채워줍니다.</p>
+                                        </div>
+                                    </div>
+                                    <span class="ai-model-pill"><i class="fa-solid fa-bolt"></i> Gemini 3.7 Flash</span>
+                                </div>
+
+                                <!-- AI 대화 피드 (크게 확장) -->
+                                <div class="ai-chat-history" id="ai-chat-history" style="display:none;"></div>
+
+                                <!-- AI 입력 인터페이스 -->
+                                <div class="ai-input-box">
+                                    <label class="sr-only" for="ai-order-prompt">AI 주문 분석 내용</label>
+                                    <textarea id="ai-order-prompt" class="ai-textarea" rows="10" placeholder="주문 내용이나 카톡 대화를 입력하세요. Enter: AI 분석 · Shift+Enter: 줄바꿈"></textarea>
+                                    
+                                    <div class="ai-input-bottom">
+                                        <div class="ai-attach-group">
+                                            <button type="button" class="btn btn-outline btn-xs" data-new-action="pick-files" aria-label="주문 파일 첨부">
+                                                <i class="fa-solid fa-paperclip"></i> 사진/파일 선택
+                                            </button>
+                                            <span id="ai-attached-count" class="ai-attach-badge" style="display:none;">0개 첨부됨</span>
+                                        </div>
+                                        <div class="ai-action-buttons">
+                                            <button type="button" class="btn btn-ghost btn-xs" id="btn-reset-ai-chat" data-new-action="reset-ai" aria-label="AI 대화 초기화" style="display:none;">
+                                                <i class="fa-solid fa-rotate-left"></i> 대화 초기화
+                                            </button>
+                                            <button type="button" class="btn btn-ai-submit" id="btn-ai-analyze" data-new-action="ai-analyze">
+                                                <i class="fa-solid fa-sparkles"></i> AI 분석 & 자동 완성
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 통합 파일 드롭존 (AI 분석 & 01_수신원본 자동 저장) -->
+                                <div class="unified-dropzone-wrap">
+                                    <div class="drop-zone unified-drop-zone" id="new-project-dropzone">
+                                        <div class="dropzone-content">
+                                            <i class="fa-solid fa-cloud-arrow-up"></i>
+                                            <div class="dropzone-text">
+                                                <p><strong>파일을 끌어다 놓거나 클릭, 또는 <span class="text-highlight">Cmd+V</span>로 이미지 붙여넣기</strong></p>
+                                                <span class="drop-hint">카톡 캡처 사진(클립보드 즉시 붙여넣기), STL, 3MF, STEP, 견적서 등 (01_수신원본 자동 저장)</span>
+                                            </div>
+                                        </div>
+                                        <input type="file" id="new-project-files" name="files" aria-label="신규 프로젝트 첨부파일" multiple style="display:none;">
+                                    </div>
+
+                                    <!-- 첨부된 파일 아이콘식 카드 그리드 목록 -->
+                                    <div class="attached-files-grid" id="new-project-file-list"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 우측 패널: 프로젝트 상세정보 수동 입력 필드 & 세부 품목 목록 -->
+                        <div class="new-project-right-panel">
+                            <div class="panel-section-title">
+                                <h4 class="font-bold"><i class="fa-solid fa-pen-to-square text-primary"></i> 프로젝트 상세 정보 (수동 입력 및 수정)</h4>
+                                <span class="section-hint">AI 분석 결과가 자동으로 채워지며, 필요시 직접 수정할 수 있습니다.</span>
+                            </div>
+
+                            <div class="form-grid new-project-form-grid">
+                                <input type="hidden" name="partner_id" id="new-partner-id">
+                                <div class="form-group col-span-2 partner-picker-group">
+                                    <label for="new-partner-search">거래처 선택</label>
+                                    <input type="text" id="new-partner-search" class="form-control" list="new-partner-options" placeholder="거래처명 검색 또는 직접 입력">
+                                    <datalist id="new-partner-options"></datalist>
+                                    <span class="field-hint" id="new-partner-hint">거래처를 선택하면 연락처·배송지가 자동 입력됩니다.</span>
+                                </div>
+                                <div class="form-group col-span-2">
+                                    <label class="required" for="new-client-name">고객명</label>
+                                    <input type="text" name="client_name" id="new-client-name" class="form-control" placeholder="예: 홍길동, 랩토리" required>
+                                </div>
+                                <div class="form-group col-span-2">
+                                    <label for="new-contact-name">담당자</label>
+                                    <input type="text" name="contact_name" id="new-contact-name" class="form-control" placeholder="거래처 담당자명">
+                                </div>
+                                <div class="form-group col-span-2">
+                                    <label class="required" for="new-job-name">작업명</label>
+                                    <input type="text" name="job_name" id="new-job-name" class="form-control" placeholder="예: 먹코 1세트 제작, 피규어 목업" required>
+                                </div>
+                                <div class="form-group col-span-1">
+                                    <label for="new-received-date">접수일</label>
+                                    <input type="date" name="received_date" id="new-received-date" class="form-control">
+                                </div>
+                                <div class="form-group col-span-1">
+                                    <label for="new-channel">접수 채널</label>
+                                    <select name="channel" id="new-channel" class="form-control">
+                                        <option value="카카오톡">카카오톡</option>
+                                        <option value="카카오톡 오픈채팅">카카오톡 오픈채팅</option>
+                                        <option value="이메일">이메일</option>
+                                        <option value="스마트스토어">스마트스토어</option>
+                                        <option value="전화/문자">전화/문자</option>
+                                        <option value="기타">기타</option>
+                                    </select>
+                                </div>
+                                <div class="form-group col-span-1">
+                                    <label for="new-material">소재</label>
+                                    <input type="text" name="material" id="new-material" class="form-control" placeholder="예: PLA+, PETG, ABS, Resin">
+                                </div>
+                                <div class="form-group col-span-1">
+                                    <label for="new-color">색상</label>
+                                    <input type="text" name="color" id="new-color" class="form-control" placeholder="예: Matte White, Black, Gray">
+                                </div>
+                                <div class="form-group col-span-1">
+                                    <label for="new-quantity">수량</label>
+                                    <input type="text" name="quantity" id="new-quantity" class="form-control" placeholder="예: 1세트, 2개" value="1">
+                                </div>
+                                <div class="form-group col-span-1">
+                                    <label for="new-due-date">납기 예정일</label>
+                                    <input type="date" name="due_date" id="new-due-date" class="form-control">
+                                </div>
+                                <div class="form-group col-span-1">
+                                    <label for="new-tax-type">과세 / 면세 구분</label>
+                                    <select name="tax_type" id="new-tax-type" class="form-control" data-new-action="calculate">
+                                        <option value="면세" selected>면세 (간이/계산서 미발행)</option>
+                                        <option value="과세">과세 (부가세 10% 별도/발행)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group col-span-1">
+                                    <label for="new-quote-amount">견적 금액 (원)</label>
+                                    <input type="number" name="quote_amount" id="new-quote-amount" class="form-control" placeholder="0" step="1" data-new-action="calculate">
+                                </div>
+                                <div class="form-group col-span-1">
+                                    <label for="new-shipping-fee">배송비 (원)</label>
+                                    <input type="number" name="shipping_fee" id="new-shipping-fee" class="form-control" value="3500" step="1" data-new-action="calculate">
+                                </div>
+                                <div class="form-group col-span-1">
+                                    <label for="new-phone">고객 연락처</label>
+                                    <input type="tel" name="phone" id="new-phone" class="form-control" placeholder="010-0000-0000">
+                                </div>
+                                <div class="form-group col-span-1">
+                                    <label for="new-zipcode">우편번호</label>
+                                    <input type="text" name="zipcode" id="new-zipcode" class="form-control" placeholder="우편번호">
+                                </div>
+                                <div class="form-group col-span-3">
+                                    <label for="new-address">배송 주소</label>
+                                    <input type="text" name="address" id="new-address" class="form-control" placeholder="도로명 또는 지번 주소">
+                                </div>
+                                <div class="form-group full-width">
+                                    <label for="new-detail-address">상세 주소</label>
+                                    <input type="text" name="detail_address" id="new-detail-address" class="form-control" placeholder="동/호수, 건물명 등">
+                                </div>
+                                <div class="form-group full-width">
+                                    <label for="new-request-notes">요청사항 / 출력 조건</label>
+                                    <textarea name="request_notes" id="new-request-notes" class="form-control" rows="2" placeholder="외벽 두께, 채움률, 서포트 설정 등"></textarea>
+                                </div>
+
+                                <!-- 세부 출력 품목 / 파일별 설정 테이블 -->
+                                <div class="form-group full-width new-items-container">
+                                    <div class="section-title-bar items-bar">
+                                        <div>
+                                            <h4 class="font-bold text-primary"><i class="fa-solid fa-list-check"></i> 세부 출력 품목 / 파일별 설정 (<span id="new-items-count">0</span>개)</h4>
+                                            <span class="section-hint">여러 파일이나 부품이 있을 때 파일별 소재, 색상, 수량, 단가를 각각 지정합니다.</span>
+                                        </div>
+                                        <div class="items-bar-btns">
+                                            <button type="button" class="btn btn-outline btn-xs" data-new-action="add-items-from-files" title="첨부된 파일 목록에서 품목 행 자동 생성">
+                                                <i class="fa-solid fa-file-import"></i> 첨부파일에서 품목 불러오기
+                                            </button>
+                                            <button type="button" class="btn btn-outline btn-xs" data-new-action="add-item">
+                                                <i class="fa-solid fa-plus"></i> 품목 추가
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div class="items-table-wrapper">
+                                        <table class="items-table new-project-items-table" id="new-project-items-table">
+                                            <thead>
+                                                <tr>
+                                                    <th style="min-width: 240px; width: 30%;">품명 / 파일명</th>
+                                                    <th style="min-width: 120px; width: 14%;">소재</th>
+                                                    <th style="min-width: 130px; width: 15%;">색상</th>
+                                                    <th style="min-width: 80px; width: 9%; text-align: center;">수량</th>
+                                                    <th style="min-width: 120px; width: 14%; text-align: right;">단가(원)</th>
+                                                    <th style="min-width: 140px; width: 14%;">비고/조건</th>
+                                                    <th style="width: 38px; text-align: center;"></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="new-project-items-tbody">
+                                                <!-- 동적 품목 행들 -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div class="items-summary-strip">
+                                        <span>총 수량: <strong id="new-items-total-qty">0개</strong></span>
+                                        <span>품목 합계: <strong id="new-items-total-price">0원</strong></span>
+                                        <span>+ 배송비: <strong id="new-items-shipping-display">3,500원</strong></span>
+                                        <span>= 최종 합계: <strong id="new-items-grand-total" class="text-highlight" style="font-size: 1.05rem; color: #38bdf8;">3,500원</strong></span>
+                                        <span id="new-items-tax-info" style="font-size:0.85rem; color:var(--text-dim);">(면세)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-ghost" data-ui-action="close-modal" data-modal-id="modal-new-project">취소</button>
+                    <button type="submit" class="btn btn-primary" id="btn-submit-new-project">
+                        <i class="fa-solid fa-check"></i> 프로젝트 등록 (5초 내 생성)
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 2. 거래처 관리 -->
+    <div class="modal-overlay" id="modal-partner" role="dialog" aria-modal="true" aria-hidden="true" inert aria-labelledby="partner-modal-title">
+        <div class="modal-card modal-lg">
+            <div class="modal-header">
+                <div class="modal-title-group">
+                    <i class="fa-solid fa-address-book text-primary"></i>
+                    <h2 id="partner-modal-title">거래처 등록</h2>
+                </div>
+                <button type="button" class="modal-close" aria-label="거래처 입력 닫기" data-ui-action="close-modal" data-modal-id="modal-partner"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="form-partner">
+                <input type="hidden" id="partner-edit-id">
+                <div class="modal-body">
+                    <div class="form-grid partner-form-grid">
+                        <div class="form-group">
+                            <label class="required" for="partner-name">거래처명</label>
+                            <input type="text" id="partner-name" class="form-control" required placeholder="업체명 또는 고객명">
+                        </div>
+                        <div class="form-group">
+                            <label for="partner-type">구분</label>
+                            <select id="partner-type" class="form-control">
+                                <option value="미분류">미분류</option>
+                                <option value="업체">업체</option>
+                                <option value="개인">개인</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="partner-contact-name">담당자</label>
+                            <input type="text" id="partner-contact-name" class="form-control" placeholder="담당자명">
+                        </div>
+                        <div class="form-group">
+                            <label for="partner-phone">전화번호</label>
+                            <input type="tel" id="partner-phone" class="form-control" placeholder="010-0000-0000">
+                        </div>
+                        <div class="form-group">
+                            <label for="partner-zipcode">우편번호</label>
+                            <input type="text" id="partner-zipcode" class="form-control" placeholder="우편번호">
+                        </div>
+                        <div class="form-group col-span-2">
+                            <label for="partner-address">주소</label>
+                            <input type="text" id="partner-address" class="form-control" placeholder="도로명 또는 지번 주소">
+                        </div>
+                        <div class="form-group col-span-2">
+                            <label for="partner-detail-address">상세주소</label>
+                            <input type="text" id="partner-detail-address" class="form-control" placeholder="동/호수, 건물명 등">
+                        </div>
+                        <div class="form-group col-span-2">
+                            <label for="partner-memo">메모</label>
+                            <textarea id="partner-memo" class="form-control" rows="3" placeholder="거래처 관련 메모"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-ghost" data-ui-action="close-modal" data-modal-id="modal-partner">취소</button>
+                    <button type="submit" class="btn btn-primary" id="btn-save-partner"><i class="fa-solid fa-check"></i> 저장</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 2. 프로젝트 상세 & 파일 관리 모달 -->
+    <div class="modal-overlay" id="modal-project-detail" role="dialog" aria-modal="true" aria-hidden="true" inert aria-labelledby="detail-project-title">
+        <div class="modal-card modal-project-detail-wide">
+            <div class="modal-header project-detail-header">
+                <!-- 닫기(X) 버튼은 모달 헤더 오른쪽 맨 위 구석에 고정 -->
+                        <button type="button" class="modal-close detail-modal-close" aria-label="프로젝트 상세 닫기" data-ui-action="close-modal" data-modal-id="modal-project-detail">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+
+                <!-- 1행: 프로젝트 번호 + 전체 제목 고정 (잘림 없이 표시) -->
+                <div class="detail-header-title-row">
+                    <span class="project-code-badge" id="detail-project-no">260818-001</span>
+                    <h2 id="detail-project-title">고객명 - 작업명</h2>
+                </div>
+            </div>
+
+            <div class="modal-body detail-modal-body">
+                <!-- 상단 컨트롤 영역: 프로젝트 액션 도구 그룹 + 상태 관리 그룹 -->
+                <div class="detail-top-controls">
+                    <div class="detail-control-row">
+                        <!-- 프로젝트 액션 도구 그룹 -->
+                        <div class="detail-action-group">
+                            <button class="btn btn-outline btn-sm" id="btn-open-3mf" title="Bambu Studio에서 3MF 슬라이싱 파일 열기">
+                                <i class="fa-solid fa-cube text-primary"></i> 3MF 열기
+                            </button>
+                            <button class="btn btn-outline btn-sm" id="btn-open-in-finder" title="macOS Finder에서 열기">
+                                <i class="fa-solid fa-folder-open"></i> Finder 폴더 열기
+                            </button>
+                            <div class="dropdown-wrapper" id="estimate-dropdown-wrapper">
+                                <button type="button" class="btn btn-outline btn-sm dropdown-trigger" id="btn-estimate-menu-trigger" data-ui-action="estimate-menu" title="견적서 및 거래명세서 발행 메뉴">
+                                    <i class="fa-solid fa-file-invoice-dollar text-primary"></i> 견적/명세서 생성 <i class="fa-solid fa-chevron-down text-muted" style="font-size: 0.75rem; margin-left: 4px;"></i>
+                                </button>
+                                <div class="dropdown-menu-list" id="estimate-dropdown-menu">
+                                    <button type="button" class="dropdown-menu-item" data-ui-action="estimate" data-doc-type="integrated">
+                                        <i class="fa-solid fa-layer-group text-primary"></i>
+                                        <div class="menu-item-text">
+                                            <span class="menu-item-title">📑 통합 생성 (2개 파일)</span>
+                                            <span class="menu-item-desc">견적서 + 거래명세서 각각 개별 PDF 2개 생성</span>
+                                        </div>
+                                    </button>
+                                    <button type="button" class="dropdown-menu-item" data-ui-action="estimate" data-doc-type="estimate">
+                                        <i class="fa-solid fa-file-invoice text-info"></i>
+                                        <div class="menu-item-text">
+                                            <span class="menu-item-title">📄 견적서 생성 (1개 파일)</span>
+                                            <span class="menu-item-desc">제품견적서 단독 PDF 파일 생성</span>
+                                        </div>
+                                    </button>
+                                    <button type="button" class="dropdown-menu-item" data-ui-action="estimate" data-doc-type="delivery">
+                                        <i class="fa-solid fa-receipt text-warning"></i>
+                                        <div class="menu-item-text">
+                                            <span class="menu-item-title">📋 명세서 생성 (1개 파일)</span>
+                                            <span class="menu-item-desc">거래명세서 단독 PDF 파일 생성</span>
+                                        </div>
+                                    </button>
+                                </div>
+                            </div>
+                            <button class="btn btn-success btn-sm" id="btn-complete-project">
+                                <i class="fa-solid fa-check-double"></i> 완료 처리
+                            </button>
+                            <button class="btn btn-outline-danger btn-sm" id="btn-delete-project" title="프로젝트 및 관련 폴더 삭제">
+                                <i class="fa-solid fa-trash-can"></i> 삭제
+                            </button>
+                        </div>
+
+                        <!-- 상태 관리 그룹 -->
+                        <div class="status-control-bar">
+                            <div class="status-field">
+                                <span class="field-label"><i class="fa-solid fa-cube"></i> 제작</span>
+                                <label class="sr-only" for="detail-prod-status">제작 상태</label>
+                                <select id="detail-prod-status" class="status-select prod-select" data-project-editor-status="prod_status">
+                                    <option value="접수">접수</option>
+                                    <option value="슬라이싱">슬라이싱</option>
+                                    <option value="견적 대기">견적 대기</option>
+                                    <option value="출력 중">출력 중</option>
+                                    <option value="검수">검수</option>
+                                    <option value="제작 완료">제작 완료</option>
+                                </select>
+                            </div>
+                            <div class="status-field">
+                                <span class="field-label"><i class="fa-solid fa-credit-card"></i> 결제</span>
+                                <label class="sr-only" for="detail-pay-status">결제 상태</label>
+                                <select id="detail-pay-status" class="status-select pay-select" data-project-editor-status="pay_status">
+                                    <option value="미청구">미청구</option>
+                                    <option value="견적 발송">견적 발송</option>
+                                    <option value="입금 대기">입금 대기</option>
+                                    <option value="부분 입금">부분 입금</option>
+                                    <option value="입금 완료">입금 완료</option>
+                                </select>
+                            </div>
+                            <div class="status-field">
+                                <span class="field-label"><i class="fa-solid fa-truck"></i> 배송</span>
+                                <label class="sr-only" for="detail-deliv-status">배송 상태</label>
+                                <select id="detail-deliv-status" class="status-select deliv-select" data-project-editor-status="deliv_status">
+                                    <option value="예약 필요">예약 필요</option>
+                                    <option value="예약 완료">예약 완료</option>
+                                    <option value="발송">발송</option>
+                                    <option value="배송 완료">배송 완료</option>
+                                    <option value="미정">미정</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AI 대화형 프로젝트 스마트 수정 어시스턴트 바 (Gemini 3.7 Flash) -->
+                    <div class="detail-ai-modifier-card">
+                        <div class="detail-ai-input-wrap">
+                            <div class="detail-ai-icon" title="Gemini 3.7 Flash AI 어시스턴트"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+                            <label class="sr-only" for="detail-ai-prompt">상세 프로젝트 AI 수정 요청</label><input type="text" id="detail-ai-prompt" class="detail-ai-input" placeholder="AI로 프로젝트 수정: '소재 ASA 검정으로 변경하고 수량 5개, 견적 6만원으로 수정해줘', '운송장 12345678 입력하고 배송완료 처리' 등">
+                            <div class="detail-ai-actions">
+                                <button type="button" class="btn btn-outline btn-xs btn-ai-attach-detail" data-detail-ai-action="attach" title="사진 / 캡처 첨부 (Cmd+V 붙여넣기 지원)">
+                                    <i class="fa-solid fa-paperclip"></i> <span id="detail-ai-file-count" style="display:none;">0개</span>
+                                </button>
+                                <input type="file" id="detail-ai-files" aria-label="상세 프로젝트 AI 첨부파일" multiple accept="image/png,image/jpeg,image/webp,.pdf,.csv,.stl,.step,.stp,.3mf,.xlsx" style="display:none;">
+                                <button type="button" class="btn btn-primary btn-sm btn-detail-ai-submit" id="btn-detail-ai-submit" data-detail-ai-action="submit">
+                                    <i class="fa-solid fa-sparkles"></i> AI 수정 적용
+                                </button>
+                            </div>
+                        </div>
+                        <!-- 첨부된 파일 칩 목록 -->
+                        <div class="detail-ai-attached-chips" id="detail-ai-attached-chips" style="display:none;"></div>
+                        <!-- AI 응답 피드백 버블 -->
+                        <div class="detail-ai-feedback-bubble" id="detail-ai-feedback-bubble" style="display:none;">
+                            <i class="fa-solid fa-robot text-primary"></i>
+                            <span id="detail-ai-feedback-text"></span>
+                            <button type="button" class="btn-bubble-close" data-detail-ai-action="close-feedback"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 상세 내용 3단 와이드 대시보드 레이아웃 (26% : 42% : 32%) -->
+                <div class="detail-split-layout detail-3col-layout">
+                    <!-- 1열: 프로젝트 기본 정보 & 로지아이 배송 & 메모 (26%) -->
+                    <div class="detail-col-info">
+                        <!-- 기본 정보 카드 (2열 컴팩트 레이아웃) -->
+                        <div class="info-card basic-info-card">
+                            <div class="info-card-header">
+                                <h4><i class="fa-solid fa-circle-info"></i> 기본 정보</h4>
+                                <button class="btn btn-ghost btn-xs" id="btn-edit-project-info"><i class="fa-solid fa-pen"></i> 전체수정</button>
+                            </div>
+                            <div class="info-list">
+                                <!-- 작업명 (전체 너비 1행) -->
+                                <div class="info-row full-width-row" data-field="job_name">
+                                    <span class="lbl">작업명:</span>
+                                    <div class="val-wrap" id="wrap-job-name">
+                                        <span class="val font-medium text-main" id="d-job-name">-</span>
+                                        <button type="button" class="inline-edit-btn" data-detail-action="edit" data-field="job_name" title="작업명 수정"><i class="fa-solid fa-pen"></i></button>
+                                    </div>
+                                </div>
+
+                                <!-- 2열 그리드 행들 (세로 공간 절약) -->
+                                <div class="info-row-grid-2col">
+                                    <div class="info-row" data-field="client_name">
+                                        <span class="lbl">고객명:</span>
+                                        <div class="val-wrap" id="wrap-client-name">
+                                            <span class="val font-bold text-main" id="d-client-name">-</span>
+                                            <button type="button" class="inline-edit-btn" data-detail-action="edit" data-field="client_name" title="고객명 수정"><i class="fa-solid fa-pen"></i></button>
+                                        </div>
+                                    </div>
+                                    <div class="info-row" data-field="contact_name">
+                                        <span class="lbl">담당자:</span>
+                                        <div class="val-wrap" id="wrap-contact-name">
+                                            <span class="val" id="d-contact-name">-</span>
+                                            <button type="button" class="inline-edit-btn" data-detail-action="edit" data-field="contact_name" title="담당자 수정"><i class="fa-solid fa-pen"></i></button>
+                                        </div>
+                                    </div>
+                                    <div class="info-row" data-field="received_date">
+                                        <span class="lbl">접수일:</span>
+                                        <div class="val-wrap" id="wrap-received-date">
+                                            <span class="val" id="d-received-date">-</span>
+                                            <button type="button" class="inline-edit-btn" data-detail-action="edit" data-field="received_date" title="접수일 수정"><i class="fa-solid fa-pen"></i></button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="info-row-grid-2col">
+                                    <div class="info-row" data-field="channel">
+                                        <span class="lbl">채널:</span>
+                                        <div class="val-wrap" id="wrap-channel">
+                                            <span class="val" id="d-channel">-</span>
+                                            <button type="button" class="inline-edit-btn" data-detail-action="edit" data-field="channel" title="접수채널 수정"><i class="fa-solid fa-pen"></i></button>
+                                        </div>
+                                    </div>
+                                    <div class="info-row" data-field="material">
+                                        <span class="lbl">소재:</span>
+                                        <div class="val-wrap" id="wrap-material">
+                                            <span class="val" id="d-material">-</span>
+                                            <button type="button" class="inline-edit-btn" data-detail-action="edit" data-field="material" title="소재 수정"><i class="fa-solid fa-pen"></i></button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="info-row-grid-2col">
+                                    <div class="info-row" data-field="color">
+                                        <span class="lbl">색상:</span>
+                                        <div class="val-wrap" id="wrap-color">
+                                            <span class="val" id="d-color">-</span>
+                                            <button type="button" class="inline-edit-btn" data-detail-action="edit" data-field="color" title="색상 수정"><i class="fa-solid fa-pen"></i></button>
+                                        </div>
+                                    </div>
+                                    <div class="info-row" data-field="quantity">
+                                        <span class="lbl">수량:</span>
+                                        <div class="val-wrap" id="wrap-quantity">
+                                            <span class="val" id="d-quantity">-</span>
+                                            <button type="button" class="inline-edit-btn" data-detail-action="edit" data-field="quantity" title="수량 수정"><i class="fa-solid fa-pen"></i></button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="info-row-grid-2col">
+                                    <div class="info-row" data-field="due_date">
+                                        <span class="lbl">납기:</span>
+                                        <div class="val-wrap" id="wrap-due-date">
+                                            <span class="val text-highlight" id="d-due-date">-</span>
+                                            <button type="button" class="inline-edit-btn" data-detail-action="edit" data-field="due_date" title="납기일 수정"><i class="fa-solid fa-pen"></i></button>
+                                        </div>
+                                    </div>
+                                    <div class="info-row" data-field="phone">
+                                        <span class="lbl">연락처:</span>
+                                        <div class="val-wrap" id="wrap-phone">
+                                            <span class="val" id="d-phone">-</span>
+                                            <button type="button" class="inline-edit-btn" data-detail-action="edit" data-field="phone" title="연락처 수정"><i class="fa-solid fa-pen"></i></button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 배송주소 & 상세주소 (전체 너비) -->
+                                <div class="info-row full-width-row" data-field="address">
+                                    <span class="lbl">주소:</span>
+                                    <div class="val-wrap" id="wrap-address">
+                                        <span class="val" id="d-address">-</span>
+                                        <button type="button" class="inline-edit-btn" data-detail-action="edit" data-field="address" title="배송주소 수정"><i class="fa-solid fa-pen"></i></button>
+                                    </div>
+                                </div>
+                                <div class="info-row full-width-row" data-field="detail_address">
+                                    <span class="lbl">상세:</span>
+                                    <div class="val-wrap" id="wrap-detail-address">
+                                        <span class="val" id="d-detail-address">-</span>
+                                        <button type="button" class="inline-edit-btn" data-detail-action="edit" data-field="detail_address" title="상세주소 수정"><i class="fa-solid fa-pen"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 로지아이 택배 배송 정보 카드 (기본정보 바로 아래로 우선 배치) -->
+                        <div class="info-card delivery-quick-card">
+                            <div class="info-card-header">
+                                <h4><i class="fa-solid fa-boxes-packing text-primary"></i> 배송 정보</h4>
+                                <button class="btn btn-outline btn-xs" id="btn-copy-logii-address"><i class="fa-solid fa-copy"></i> 주소 복사</button>
+                            </div>
+                            <div class="delivery-quick-info">
+                                <div class="quick-delivery-grid">
+                                    <div class="quick-delivery-row">
+                                        <span class="lbl-delivery">택배사:</span>
+                                        <select id="detail-courier" class="form-control form-control-xs detail-courier-select" aria-label="택배사">
+                                            <option value="한진택배">한진택배</option>
+                                            <option value="CJ대한통운">CJ대한통운</option>
+                                            <option value="롯데택배">롯데택배</option>
+                                            <option value="로젠택배">로젠택배</option>
+                                            <option value="우체국택배">우체국택배</option>
+                                        </select>
+                                    </div>
+                                    <div class="quick-delivery-row">
+                                        <span class="lbl-delivery">운송장:</span>
+                                        <div class="tracking-input-group">
+                                            <label class="sr-only" for="detail-tracking-no">운송장번호</label>
+                                            <input type="text" id="detail-tracking-no" class="form-control form-control-xs" placeholder="운송장번호 입력">
+                                            <button class="btn btn-primary btn-xs" id="btn-save-tracking">저장</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="tracking-link-row" id="detail-tracking-link-row">
+                                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                    <a id="detail-tracking-link" class="is-disabled" href="#" target="_blank" rel="noopener noreferrer" aria-disabled="true">공식 배송조회</a>
+                                    <button type="button" class="btn btn-outline btn-xs" id="btn-track-delivery" disabled>상태 조회</button>
+                                </div>
+                                <div class="tracking-result-panel" id="detail-tracking-result" hidden aria-live="polite">
+                                    <div class="tracking-result-heading">
+                                        <i class="fa-solid fa-truck-fast"></i>
+                                        <strong>최신 배송 이력</strong>
+                                        <span class="tracking-result-status" id="detail-tracking-status"></span>
+                                    </div>
+                                    <p class="tracking-result-summary" id="detail-tracking-summary"></p>
+                                    <div class="tracking-result-meta">
+                                        <span id="detail-tracking-time"></span>
+                                        <span id="detail-tracking-location"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 메모 및 출력조건 카드 (컴팩트 3~5줄 높이 + 내부 스크롤) -->
+                        <div class="info-card memo-card">
+                            <div class="info-card-header">
+                                <h4><i class="fa-solid fa-note-sticky text-warning"></i> 메모 및 출력조건</h4>
+                                <button type="button" class="btn btn-ghost btn-xs" data-detail-action="edit" data-field="request_notes" title="메모 즉시 수정"><i class="fa-solid fa-pen"></i> 수정</button>
+                            </div>
+                            <div class="memo-content-box" id="wrap-request-notes">
+                                <div class="memo-text-view" id="d-notes">특이사항 없음</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2열: 세부 출력 품목 & 금액 정산 (42%) -->
+                    <div class="detail-col-items">
+                        <!-- 세부 품목 목록 카드 (편집/추가/삭제 지원) -->
+                        <div class="info-card" id="detail-items-card">
+                            <div class="info-card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                                <h4><i class="fa-solid fa-list-check"></i> 세부 출력 품목 (<span id="detail-items-count">0</span>개)</h4>
+                                <div class="detail-items-actions" style="display: flex; gap: 6px;">
+                                    <button type="button" class="btn btn-outline btn-xs" id="btn-add-detail-item" data-detail-items-action="add">
+                                        <i class="fa-solid fa-plus"></i> 품목 추가
+                                    </button>
+                                    <button type="button" class="btn btn-primary btn-xs" id="btn-save-detail-items" data-detail-items-action="save">
+                                        <i class="fa-solid fa-floppy-disk"></i> 품목 저장
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="detail-items-table-wrapper">
+                                <table class="items-table detail-items-table" id="detail-items-table">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 40%;">품명 / 파일명</th>
+                                            <th style="width: 16%;">소재</th>
+                                            <th style="width: 16%;">색상</th>
+                                            <th style="width: 12%;">수량</th>
+                                            <th style="width: 16%;">단가(원)</th>
+                                            <th style="width: 36px; text-align: center;">삭제</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="detail-items-tbody">
+                                        <!-- 품목 렌더링 -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="detail-items-summary" id="detail-items-summary" style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px; padding-top: 6px; border-top: 1px dashed var(--border-color); font-size: 0.9rem; color: var(--text-muted);">
+                                <span>총 품목 수량: <strong id="detail-items-total-qty" class="text-main font-bold">0개</strong></span>
+                                <span>품목 합계: <strong id="detail-items-total-price" class="text-primary font-bold">0원</strong></span>
+                            </div>
+                        </div>
+
+                        <!-- 금액 정산 카드 -->
+                        <div class="info-card amount-card">
+                            <div class="info-card-header">
+                                <h4><i class="fa-solid fa-won-sign"></i> 금액 및 결제 정산</h4>
+                            </div>
+                            <div class="price-breakdown price-breakdown-compact">
+                                <div class="price-row"><span>출력비:</span><span id="d-quote-amount">0원</span></div>
+                                <div class="price-row"><span>모델/후가공:</span><span id="d-extra-fee">0원</span></div>
+                                <div class="price-row">
+                                    <span>배송비:</span>
+                                    <div class="detail-shipping-edit-wrap" style="display: inline-flex; align-items: center; gap: 4px;">
+                                        <input type="number" id="detail-shipping-fee-input" class="form-control" style="width: 90px; height: 28px; font-size: 0.9rem; padding: 2px 6px; text-align: right;" step="1" placeholder="0" data-detail-items-action="shipping" aria-label="배송비">
+                                        <span style="font-size: 0.88rem; color: var(--text-muted);">원</span>
+                                    </div>
+                                </div>
+                                <div class="price-row">
+                                    <span>과세 구분:</span>
+                                    <select id="detail-tax-type-select" class="form-control form-control-sm" style="width: 105px; height: 28px; font-size: 0.9rem; padding: 2px 6px;" data-detail-items-action="tax" aria-label="과세 구분">
+                                        <option value="면세">면세 (0%)</option>
+                                        <option value="과세">과세 (10%)</option>
+                                    </select>
+                                </div>
+                                <div class="price-row total-row"><span>최종 금액:</span><span id="d-total-amount" class="text-primary font-bold">0원</span></div>
+                                <div class="price-row"><span>입금액:</span><span id="d-paid-amount" class="text-success font-bold">0원</span></div>
+                                <div class="price-row unpaid-row"><span>미수금:</span><span id="d-unpaid-amount" class="text-danger font-bold">0원</span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3열: 6개 표준 폴더 파일 탭 탐색기 (32%) -->
+                    <div class="detail-files-pane">
+                        <div class="files-tab-header" role="tablist" aria-label="프로젝트 파일 폴더">
+                            <button class="file-tab active" id="detail-file-tab-received" role="tab" aria-controls="tab-files-container" aria-selected="true" tabindex="0" data-tab="received">
+                                <i class="fa-solid fa-inbox"></i> <span>01_수신원본</span> <span class="tab-badge" id="tab-badge-received">0</span>
+                            </button>
+                            <button class="file-tab" id="detail-file-tab-modified" role="tab" aria-controls="tab-files-container" aria-selected="false" tabindex="-1" data-tab="modified">
+                                <i class="fa-solid fa-pen-ruler"></i> <span>02_모델수정</span> <span class="tab-badge" id="tab-badge-modified">0</span>
+                            </button>
+                            <button class="file-tab" id="detail-file-tab-slicing" role="tab" aria-controls="tab-files-container" aria-selected="false" tabindex="-1" data-tab="slicing">
+                                <i class="fa-solid fa-layer-group"></i> <span>03_슬라이싱_3MF</span> <span class="tab-badge" id="tab-badge-slicing">0</span>
+                            </button>
+                            <button class="file-tab" id="detail-file-tab-qc" role="tab" aria-controls="tab-files-container" aria-selected="false" tabindex="-1" data-tab="qc">
+                                <i class="fa-solid fa-camera"></i> <span>04_출력검수</span> <span class="tab-badge" id="tab-badge-qc">0</span>
+                            </button>
+                            <button class="file-tab" id="detail-file-tab-estimate" role="tab" aria-controls="tab-files-container" aria-selected="false" tabindex="-1" data-tab="estimate">
+                                <i class="fa-solid fa-file-invoice"></i> <span>05_견적거래</span> <span class="tab-badge" id="tab-badge-estimate">0</span>
+                            </button>
+                            <button class="file-tab" id="detail-file-tab-delivery" role="tab" aria-controls="tab-files-container" aria-selected="false" tabindex="-1" data-tab="delivery">
+                                <i class="fa-solid fa-truck"></i> <span>06_배송</span> <span class="tab-badge" id="tab-badge-delivery">0</span>
+                            </button>
+                        </div>
+
+                        <!-- 파일 업로드 드롭존 -->
+                        <div class="tab-dropzone" id="tab-file-dropzone">
+                            <i class="fa-solid fa-cloud-arrow-up"></i>
+                            <span>이 탭(<strong id="current-tab-name">01_수신원본</strong>)에 파일을 드래그하여 바로 저장하세요</span>
+                            <input type="file" id="tab-file-input" aria-label="현재 파일 탭 첨부파일" multiple style="display:none;">
+                        </div>
+
+                        <!-- 파일 목록 -->
+                        <div class="tab-files-list" id="tab-files-container" role="tabpanel" aria-labelledby="detail-file-tab-received" tabindex="0">
+                            <!-- JS로 파일 아이템 렌더링 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 프로젝트 기본정보 수정 모달 -->
+    <div class="modal-overlay" id="modal-edit-project-info" role="dialog" aria-modal="true" aria-hidden="true" inert aria-labelledby="edit-info-modal-title">
+        <div class="modal-card modal-lg">
+            <div class="modal-header">
+                <div class="modal-title-group">
+                    <i class="fa-solid fa-pen-to-square text-primary"></i>
+                    <h2 id="edit-info-modal-title">프로젝트 기본 정보 수정</h2>
+                </div>
+                <button type="button" class="modal-close" aria-label="기본 정보 수정 닫기" data-ui-action="close-modal" data-modal-id="modal-edit-project-info"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="form-edit-project-info" novalidate>
+                <div class="modal-body">
+                    <div class="form-row-3">
+                        <div class="form-group">
+                            <label for="edit-client-name">고객명 / 업체명</label>
+                            <input type="text" id="edit-client-name" class="form-control" placeholder="고객명 또는 업체명">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-contact-name">담당자</label>
+                            <input type="text" id="edit-contact-name" class="form-control" placeholder="거래처 담당자명">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-job-name">작업명</label>
+                            <input type="text" id="edit-job-name" class="form-control" placeholder="작업명">
+                        </div>
+                    </div>
+
+                    <div class="form-row-3">
+                        <div class="form-group">
+                            <label for="edit-received-date">접수일</label>
+                            <input type="date" id="edit-received-date" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-channel">접수 채널</label>
+                            <select id="edit-channel" class="form-control">
+                                <option value="카카오톡">카카오톡</option>
+                                <option value="카카오톡 오픈채팅">카카오톡 오픈채팅</option>
+                                <option value="이메일">이메일</option>
+                                <option value="스마트스토어">스마트스토어</option>
+                                <option value="전화/문자">전화/문자</option>
+                                <option value="기타">기타</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-due-date">납기 예정일</label>
+                            <input type="date" id="edit-due-date" class="form-control">
+                        </div>
+                    </div>
+
+                    <div class="form-row-3">
+                        <div class="form-group">
+                            <label for="edit-material">소재</label>
+                            <select id="edit-material" class="form-control">
+                                <option value="PLA">PLA</option>
+                                <option value="PLA+">PLA+</option>
+                                <option value="PETG">PETG</option>
+                                <option value="ABS">ABS</option>
+                                <option value="ASA">ASA</option>
+                                <option value="TPU">TPU</option>
+                                <option value="PC">PC</option>
+                                <option value="Nylon">Nylon (PA)</option>
+                                <option value="Resin">Resin (레진)</option>
+                                <option value="기타">기타</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-color">색상</label>
+                            <input type="text" id="edit-color" class="form-control" placeholder="예: Black, White, Gray">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-quantity">수량</label>
+                            <input type="text" id="edit-quantity" class="form-control" placeholder="예: 1, 5세트">
+                        </div>
+                    </div>
+
+                    <div class="form-row-3">
+                        <div class="form-group">
+                            <label for="edit-shipping-fee">배송비 (원)</label>
+                            <input type="number" id="edit-shipping-fee" class="form-control" placeholder="3500" step="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-model-fee">모델링/후가공비 (원)</label>
+                            <input type="number" id="edit-model-fee" class="form-control" placeholder="0" step="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-tax-type">과세 / 면세 구분</label>
+                            <select id="edit-tax-type" class="form-control">
+                                <option value="면세">면세 (간이/계산서 미발행)</option>
+                                <option value="과세">과세 (부가세 10% 별도/발행)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label for="edit-phone">고객 연락처</label>
+                            <input type="tel" id="edit-phone" class="form-control" placeholder="010-XXXX-XXXX">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-zipcode">우편번호</label>
+                            <input type="text" id="edit-zipcode" class="form-control" placeholder="우편번호 5자리">
+                        </div>
+                    </div>
+
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label for="edit-address">배송지 주소</label>
+                            <input type="text" id="edit-address" class="form-control" placeholder="도로명 또는 지번 주소">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-detail-address">상세 주소</label>
+                            <input type="text" id="edit-detail-address" class="form-control" placeholder="동/호수, 층 등">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="edit-request-notes">출력 조건 및 고객 요청사항</label>
+                        <textarea id="edit-request-notes" class="form-control" rows="3" placeholder="특이사항, 인필, 서포트 조건 등"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="edit-memo">내부 관리 메모</label>
+                        <textarea id="edit-memo" class="form-control" rows="2" placeholder="공방 내부 메모"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-ghost" data-ui-action="close-modal" data-modal-id="modal-edit-project-info">취소</button>
+                    <button type="submit" class="btn btn-primary" id="btn-save-project-info"><i class="fa-solid fa-floppy-disk"></i> 저장하기</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 3. 견적서 / 명세서 생성 모달 -->
+    <div class="modal-overlay" id="modal-estimate-gen" role="dialog" aria-modal="true" aria-hidden="true" inert aria-labelledby="estimate-modal-title">
+        <div class="modal-card modal-lg">
+            <div class="modal-header">
+                <div class="modal-title-group">
+                    <i class="fa-solid fa-file-invoice-dollar text-primary"></i>
+                    <h2 id="estimate-modal-title">Excel 및 PDF 견적서 / 명세서 생성</h2>
+                </div>
+                <button type="button" class="modal-close" aria-label="견적서 생성 닫기" data-estimate-action="close" data-modal-id="modal-estimate-gen"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="form-generate-estimate">
+                <div class="modal-body">
+                    <!-- 발행 문서 종류 3-Card Selector -->
+                    <div class="doc-type-selector-grid">
+                        <label class="doc-type-card active" data-type="integrated" data-estimate-action="doc-type" data-doc-type="integrated">
+                            <input type="radio" name="est_doc_type_radio" value="integrated" checked>
+                            <div class="doc-type-icon"><i class="fa-solid fa-layer-group"></i></div>
+                            <div class="doc-type-text">
+                                <div class="doc-type-title">📑 통합 생성 (2개 파일)</div>
+                                <div class="doc-type-sub">견적서 + 거래명세서 각각 개별 PDF 2개 생성</div>
+                            </div>
+                        </label>
+                        <label class="doc-type-card" data-type="estimate" data-estimate-action="doc-type" data-doc-type="estimate">
+                            <input type="radio" name="est_doc_type_radio" value="estimate">
+                            <div class="doc-type-icon"><i class="fa-solid fa-file-invoice"></i></div>
+                            <div class="doc-type-text">
+                                <div class="doc-type-title">📄 견적서 생성</div>
+                                <div class="doc-type-sub">제품견적서 단독 PDF 1개 파일 생성</div>
+                            </div>
+                        </label>
+                        <label class="doc-type-card" data-type="delivery" data-estimate-action="doc-type" data-doc-type="delivery">
+                            <input type="radio" name="est_doc_type_radio" value="delivery">
+                            <div class="doc-type-icon"><i class="fa-solid fa-receipt"></i></div>
+                            <div class="doc-type-text">
+                                <div class="doc-type-title">📋 명세서 생성</div>
+                                <div class="doc-type-sub">거래명세서 단독 PDF 1개 파일 생성</div>
+                            </div>
+                        </label>
+                    </div>
+                    <input type="hidden" id="est-doc-type" value="integrated">
+
+                    <div class="estimate-form-top">
+                        <div class="form-group">
+                            <label for="est-date">발행일자</label>
+                            <input type="date" id="est-date" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="est-recipient">수령인 / 고객명</label>
+                            <input type="text" id="est-recipient" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="est-contact">연락처</label>
+                            <input type="text" id="est-contact" class="form-control">
+                        </div>
+                        <div class="form-group full-width">
+                            <label for="est-address">배송 주소</label>
+                            <input type="text" id="est-address" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="est-shipping-fee">배송비 (원)</label>
+                            <input type="number" id="est-shipping-fee" class="form-control" value="3500" step="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="est-tax-type">과세 구분</label>
+                            <select id="est-tax-type" class="form-control">
+                                <option value="면세" selected>면세 (부가세 0%)</option>
+                                <option value="과세">과세 (부가세 10% 별도)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="items-table-section">
+                        <div class="section-title-bar">
+                            <h4>품목 상세 내역</h4>
+                            <button type="button" class="btn btn-outline btn-xs" data-estimate-action="add-item">
+                                <i class="fa-solid fa-plus"></i> 품목 추가
+                            </button>
+                        </div>
+                        <div class="items-table-wrapper">
+                            <table class="items-table" id="estimate-items-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 30%;">품명</th>
+                                        <th style="width: 15%;">소재</th>
+                                        <th style="width: 15%;">색상</th>
+                                        <th style="width: 10%;">수량</th>
+                                        <th style="width: 15%;">단가(원)</th>
+                                        <th style="width: 15%;">합계(원)</th>
+                                        <th style="width: 5%;"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="estimate-items-tbody">
+                                    <!-- 동적 품목 행 -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="estimate-total-summary">
+                            <span>품목 합계: <strong id="est-subtotal-display">0원</strong></span>
+                            <span>+ 배송비: <strong id="est-shipping-display">3,500원</strong></span>
+                            <span id="est-vat-wrap" style="display:none;">+ 부가세(10%): <strong id="est-vat-display" class="text-info">0원</strong></span>
+                            <span>= 최종 합계: <strong id="est-total-display" class="text-primary font-bold">3,500원</strong> <span id="est-tax-badge" style="font-size:0.82rem; color:var(--text-dim);">(면세)</span></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <div class="checkbox-option">
+                        <label>
+                            <input type="checkbox" id="est-convert-pdf" checked> Microsoft Excel을 통해 PDF 동시 생성
+                        </label>
+                    </div>
+                    <button type="button" class="btn btn-ghost" data-estimate-action="close" data-modal-id="modal-estimate-gen">취소</button>
+                    <button type="submit" class="btn btn-primary" id="btn-submit-estimate">
+                        <i class="fa-solid fa-file-arrow-down"></i> 견적서 생성 및 05_견적거래 저장
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 4. 3D STL 미리보기 모달 -->
+    <div class="modal-overlay" id="modal-stl-preview" role="dialog" aria-modal="true" aria-hidden="true" inert aria-labelledby="stl-preview-filename">
+        <div class="modal-card modal-lg">
+            <div class="modal-header">
+                <div class="modal-title-group">
+                    <i class="fa-solid fa-cube text-primary"></i>
+                    <h2 id="stl-preview-filename">3D STL 모델 미리보기</h2>
+                </div>
+                <div class="header-action-buttons">
+                    <button class="btn btn-outline btn-sm" id="btn-open-stl-system"><i class="fa-solid fa-arrow-up-right-from-square"></i> 슬라이서에서 열기</button>
+                <button type="button" class="modal-close" aria-label="STL 미리보기 닫기" data-ui-action="close-modal" data-modal-id="modal-stl-preview"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+            </div>
+            <div class="modal-body stl-viewer-body">
+                <div id="stl-canvas-container" class="stl-canvas-container">
+                    <div class="stl-loading" id="stl-loading-spinner">
+                        <i class="fa-solid fa-spinner fa-spin"></i> 3D 모델을 불러오는 중...
+                    </div>
+                </div>
+                <div class="stl-viewer-controls">
+                    <span><i class="fa-solid fa-mouse"></i> 좌클릭 드래그: 회전 | 우클릭 드래그: 이동 | 휠: 줌</span>
+                    <button class="btn btn-ghost btn-xs" id="btn-reset-camera"><i class="fa-solid fa-arrows-to-circle"></i> 시점 초기화</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI 외부 전송 설정 -->
+    <div class="modal-overlay" id="modal-ai-settings" role="dialog" aria-modal="true" aria-hidden="true" inert aria-labelledby="ai-settings-title">
+        <div class="modal-card modal-sm">
+            <div class="modal-header">
+                <div class="modal-title-group"><i class="fa-solid fa-shield-halved text-primary"></i><h2 id="ai-settings-title">AI 전송 설정</h2></div>
+                <button type="button" class="modal-close" aria-label="AI 전송 설정 닫기" data-ui-action="close-modal" data-modal-id="modal-ai-settings"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <label class="checkbox-option"><input type="checkbox" id="setting-ai-external-enabled" checked> 외부 AI 전송 허용</label>
+                <p class="field-hint">켜져 있으면 AI 기능 사용 시 입력한 주문 내용, 연락처, 주소, 첨부파일이 외부 AI 서비스로 전송될 수 있습니다. 기본값은 허용입니다.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-ghost" data-ui-action="close-modal" data-modal-id="modal-ai-settings">취소</button>
+                <button type="button" class="btn btn-primary" id="btn-save-ai-settings">저장</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 우측 하단 플로팅 AI 관제 챗봇 위젯 -->
+    <div class="floating-ai-widget-container" id="floating-ai-widget-container">
+        <!-- 챗봇 팝업 윈도우 -->
+        <div class="floating-ai-window" id="floating-ai-window" style="display:none;">
+            <!-- 헤더 -->
+            <div class="floating-ai-header">
+                <div class="floating-ai-title-wrap">
+                    <div class="floating-ai-avatar">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    </div>
+                    <div class="floating-ai-info">
+                        <div class="title-row">
+                            <h4>AI 총괄 관제 챗봇</h4>
+                            <span class="ai-model-pill"><i class="fa-solid fa-bolt"></i> 3.7 Flash</span>
+                        </div>
+                        <span class="status-indicator"><span class="live-dot"></span> 실시간 전 프로젝트 연동</span>
+                    </div>
+                </div>
+                <div class="floating-ai-header-actions">
+                    <button type="button" class="btn-icon btn-xs" title="대화 초기화" data-ui-action="reset-global-ai">
+                        <i class="fa-solid fa-rotate-right"></i>
+                    </button>
+                    <button type="button" class="btn-icon btn-xs" title="닫기" data-ui-action="close-global-ai">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 빠른 질문 칩 -->
+            <div class="floating-ai-chips" id="floating-ai-chips">
+                <button type="button" class="quick-chip" data-ui-action="global-ai-prompt" data-prompt="today">⚡ 오늘 마감/출력</button>
+                <button type="button" class="quick-chip" data-ui-action="global-ai-prompt" data-prompt="unpaid">💰 미수금 정리</button>
+                <button type="button" class="quick-chip" data-ui-action="global-ai-prompt" data-prompt="delivery">🚚 배송 필요 건</button>
+                <button type="button" class="quick-chip" data-ui-action="global-ai-prompt" data-prompt="sales">📊 매출/통계</button>
+                <button type="button" class="quick-chip" data-ui-action="global-ai-prompt" data-prompt="slicing">🧊 슬라이싱 대기</button>
+            </div>
+
+            <!-- 대화 피드 -->
+            <div class="floating-ai-feed" id="global-ai-chat-feed">
+                <div class="floating-ai-welcome-box" id="global-ai-welcome-card">
+                    <div class="welcome-badge"><i class="fa-solid fa-robot"></i></div>
+                    <div class="welcome-text">
+                        <h5>김명규크리에이티브 AI 관제 센터</h5>
+                        <p>전체 프로젝트 질문부터 <strong>"260818-001 출력 완료로 변경"</strong>, <strong>"노길준 3MF 열어줘"</strong> 등 명령을 자유롭게 입력하세요.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 첨부 파일 바 -->
+            <div class="floating-ai-attached-bar" id="global-ai-attached-files-bar" style="display:none;"></div>
+
+            <!-- 입력 영역 -->
+            <div class="floating-ai-input-area">
+                <div class="floating-ai-input-box">
+                    <button type="button" class="btn-attach" data-global-ai-action="pick-files" aria-label="전체 AI 파일 첨부" title="파일 / 캡처 사진 첨부 (Cmd+V 지원)">
+                        <i class="fa-solid fa-paperclip"></i>
+                        <span class="attach-badge" id="global-ai-attach-count" style="display:none;">0</span>
+                    </button>
+                    <input type="file" id="global-ai-file-input" aria-label="전체 AI 첨부파일" multiple accept=".3mf,.csv,.jpeg,.jpg,.pdf,.png,.stl,.step,.stp,.webp,.xlsx" style="display:none;" data-global-ai-action="file-input">
+
+                    <textarea id="global-ai-prompt" class="floating-ai-textarea" rows="1" placeholder="질문 또는 명령 입력 (Enter: 전송 · Shift+Enter: 줄바꿈)"></textarea>
+
+                    <button type="button" class="btn-send" id="btn-global-ai-send" data-global-ai-action="send">
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 플로팅 토글 런처 버튼 -->
+        <button class="floating-ai-launcher-btn" id="btn-floating-ai-launcher" title="AI 총괄 관제 챗봇 (Gemini 3.7 Flash)" data-ui-action="toggle-global-ai">
+            <div class="launcher-icon-wrap">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+            </div>
+            <span class="launcher-text">AI 관제</span>
+            <span class="launcher-pulse-dot"></span>
+        </button>
+    </div>
+
+    <!-- 토스트 알림 컨테이너 -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- 스크립트 로드 -->
+    <script src="{{ static_asset_url('js/api.js') }}"></script>
+    <script src="{{ static_asset_url('js/modules/ai-plan-ui.js') }}"></script>
+    <script src="{{ static_asset_url('js/stl_viewer.js') }}"></script>
+    <script src="{{ static_asset_url('js/modules/ui-utils.js') }}"></script>
+    <script src="{{ static_asset_url('js/modules/modal.js') }}"></script>
+    <script src="{{ static_asset_url('js/modules/ai-assistant.js') }}"></script>
+    <script src="{{ static_asset_url('js/modules/detail-ai.js') }}"></script>
+    <script src="{{ static_asset_url('js/modules/project-editor.js') }}"></script>
+    <script src="{{ static_asset_url('js/modules/global-ai-renderer.js') }}"></script>
+    <script src="{{ static_asset_url('js/modules/ui-actions.js') }}"></script>
+    <script src="{{ static_asset_url('js/modules/global-ai-commander.js') }}"></script>
+    <script src="{{ static_asset_url('js/modules/project-detail.js') }}"></script>
+    <script src="{{ static_asset_url('js/modules/file-manager.js') }}"></script>
+    <script src="{{ static_asset_url('js/modules/pricing.js') }}"></script>
+    <script src="{{ static_asset_url('js/modules/dashboard.js') }}"></script>
+    <script src="{{ static_asset_url('js/modules/estimate.js') }}"></script>
+    <script src="{{ static_asset_url('js/modules/partners.js') }}"></script>
+    <script src="{{ static_asset_url('js/modules/detail-items.js') }}"></script>
+    <script src="{{ static_asset_url('js/modules/new-project.js') }}"></script>
+    <script src="{{ static_asset_url('js/modules/project-actions.js') }}"></script>
+    <script src="{{ static_asset_url('js/modules/delivery.js') }}"></script>
+    <script src="{{ static_asset_url('js/app.js') }}"></script>
+</body>
+</html>

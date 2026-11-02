@@ -1,0 +1,1 @@
+ALTER TABLE `jobs` ADD `screenshot` text DEFAULT '' NOT NULL;
